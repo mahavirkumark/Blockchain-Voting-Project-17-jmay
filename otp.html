@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP Verification</title>
+</head>
+<body>
+  <h2>Request OTP</h2>
+  <form id="otpForm">
+    <label for="email">Email:</label>
+    <input type="email" id="email" required>
+    <button type="submit">Request OTP</button>
+  </form>
+
+  <div id="verifySection" style="display:none;">
+    <h2>Verify OTP</h2>
+    <form id="verifyForm">
+      <label for="otp">OTP:</label>
+      <input type="text" id="otp" required>
+      <button type="submit">Verify OTP</button>
+    </form>
+  </div>
+
+  <p id="message"></p>
+
+  <script>
+    document.getElementById('otpForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const response = await fetch('http://localhost:3000/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const result = await response.json();
+      document.getElementById('message').textContent = result.message;
+      if (response.ok) {
+        document.getElementById('verifySection').style.display = 'block';
+      }
+    });
+
+    document.getElementById('verifyForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const otp = document.getElementById('otp').value;
+      const response = await fetch('http://localhost:3000/verify-otp', {
+        method: 'POST

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WhatsApp OTP Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; }
+    input, button { padding: 10px; margin: 10px 0; width: 300px; display: block; }
+    #status { margin-top: 20px; font-weight: bold; color: green; }
+  </style>
+</head>
+<body>
+  <h2>Send OTP to WhatsApp</h2>
+  <input type="text" id="phone" placeholder="+919XXXXXXXXX (with country code)" />
+  <button onclick="sendOTP()">Send OTP</button>
+  <p id="status"></p>
+
+  <script>
+    async function sendOTP() {
+      const phone = document.getElementById('phone').value.trim();
+      const status = document.getElementById('status');
+
+      if (!phone.startsWith('+') || phone.length < 10) {
+        status.innerText = '❗ Please enter a valid number with country code (e.g., +91...)';
+        status.style.color = 'red';
+        return;
+      }
+
+      try {
+        const response = await fetch('/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: phone })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          status.innerText = `✅ OTP sent successfully via WhatsApp.`;
+          status.style.color = 'green';
+        } else {
+          status.innerText = `❌ Failed: ${data.message}`;
+          status.style.color = 'red';
+        }
+      } catch (error) {
+        status.innerText = '❌ Error: Could not connect to backend';
+        status.style.color = 'red';
+        console.error(error);
+      }
+    }
+  </script>
+
+  <script>
+    // Backend Code
+    const express = require('express');
+    const bodyParser = require('body-parser');
+    const twilio = require('twilio');
+
+    const app = express();
+    const port = 3000;
+
+    // Middleware
+    app.use(bodyParser.json());
+    app.use(express.static(__dirname));
+
+    // Twilio credentials
+    const accountSid = 'AC056675bbcc5380d0c68788a5d4c73ac3'; // Replace with your Account SID
+    const authToken = 'ba9c8767bd290521a2064c935ddbfa8a';   // Replace with your Auth Token
+    const twilioClient = twilio(accountSid, authToken);
+
+    // Twilio Sandbox number for WhatsApp
+    const twilioWhatsAppNumber = 'whatsapp:+14155238886';
+
+    // Endpoint to send OTP
+    app.post('/send-otp', async (req, res) => {
+      const { phone } = req.body;
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      try {
+        await twilioClient.messages.create({
+          from: twilioWhatsAppNumber,
+          to: `whatsapp:${phone}`,
+          body: `Your OTP is: ${otp}`
+        });
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Error sending OTP:', error);
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
+  </script>
+</body>
+</html>

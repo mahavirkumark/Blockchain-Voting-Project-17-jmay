@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Results</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css"/>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+    <!-- jQuery, Moment.js & DataTables -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.2/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        th:nth-child(1), td:nth-child(1) { width: 30%; }
+        th:nth-child(2), td:nth-child(2) { width: 25%; }
+        th:nth-child(3), td:nth-child(3) { width: 25%; }
+        .chart-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        #voteChartBar, #voteChartPie {
+            max-height: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Voting Results</h1>
+
+    <!-- Table -->
+    <table id="pizza_party" class="display">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Timestamp</th>
+                <th>Vote Given to Party</th>
+            </tr>
+        </thead>
+    </table>
+
+    <!-- Charts -->
+    <div class="chart-container">
+        <h2>Vote Distribution (Pie Chart)</h2>
+        <canvas id="voteChartPie"></canvas>
+    </div>
+    <div class="chart-container">
+        <h2>Vote Distribution (Bar Chart)</h2>
+        <canvas id="voteChartBar"></canvas>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            if ($.fn.DataTable.isDataTable('#pizza_party')) {
+                $('#pizza_party').DataTable().destroy();
+            }
+
+            const table = $('#pizza_party').DataTable({
+                ajax: 'https://script.google.com/macros/s/AKfycbzJ8mGEKV7qr-c_6ggAs1ohWAGdWL6qpr0hC6ByxWP9SKqpMxsiZRpAL_smZ_5K2QuS/exec',
+                columns: [
+                    { data: 'full-name' },
+                    { 
+                        data: 'Timestamp',
+                        render: function (data) {
+                            return data ? moment(data).format('ddd DD/MM/YY HH:mm:ss') : "Invalid Date";
+                        }
+                    },
+                    { data: 'vote-given-to-party' },
+                ],
+                initComplete: function () {
+                    processChartData(this.api().data());
+                }
+            });
+
+            function processChartData(data) {
+                const voteCounts = {};
+                data.each(function (row) {
+                    const party = row['vote-given-to-party'];
+                    voteCounts[party] = (voteCounts[party] || 0) + 1;
+                });
+
+                const labels = Object.keys(voteCounts);
+                const counts = Object.values(voteCounts);
+                const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+
+                // Render Pie Chart
+                const ctxPie = document.getElementById('voteChartPie').getContext('2d');
+                new Chart(ctxPie, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Vote Distribution',
+                            data: counts,
+                            backgroundColor: colors,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            datalabels: {
+                                formatter: (value, ctx) => `${ctx.chart.data.labels[ctx.dataIndex]}: ${value}`,
+                                color: '#fff',
+                                font: { weight: 'bold', size: 16 }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+
+                // Render Bar Chart
+                const ctxBar = document.getElementById('voteChartBar').getContext('2d');
+                new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Number of Votes',
+                            data: counts,
+                            backgroundColor: colors,
+                            borderColor: '#ccc',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                formatter: (value) => value,
+                                anchor: 'end',
+                                align: 'top',
+                                color: '#000',
+                                font: { weight: 'bold', size: 16 }
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Party' }},
+                            y: { beginAtZero: true, title: { display: true, text: 'Number of Votes' }}
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+        });
+
+
+    </script>
+</body>
+</html>

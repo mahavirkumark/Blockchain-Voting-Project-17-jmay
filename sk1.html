@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Login</title>
+</head>
+<body>
+
+    <h2>Google Login</h2>
+    <button onclick="googleLogin()">Login with Google</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+      
+        const firebaseConfig = {
+            apiKey: "AIzaSyB78RTVCg0cmSPp7A1RJyyAgBuCeolO0cc",
+            authDomain: "sk12-58e9e.firebaseapp.com",
+            projectId: "sk12-58e9e",
+            storageBucket: "sk12-58e9e.appspot.com",
+            messagingSenderId: "470207874652",
+            appId: "1:470207874652:web:67ba1cf3629b7e5b144899"
+        };
+      
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const provider = new GoogleAuthProvider();
+        const db = getFirestore(app);
+      
+        // Function to get today's date (YYYY-MM-DD format)
+        function getTodayDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+      
+        window.googleLogin = async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                const email = user.email;
+      
+                // Reference to Firestore document
+                const userDocRef = doc(db, "user_logins", email);
+                const userDocSnap = await getDoc(userDocRef);
+                
+                const today = getTodayDate();
+      
+                // If user is NOT "sagarkulkarni884@gmail.com", check last login date
+                if (email !== "sagarkulkarni884@gmail.com") {
+                    if (userDocSnap.exists() && userDocSnap.data().lastLogin === today) {
+                        alert("⚠️ You have already voted. ");
+                        return;
+                    }
+                }
+      
+                // Update last login timestamp
+                await setDoc(userDocRef, { lastLogin: today });
+      
+                // Redirect to home page
+                window.location.href = "homi.html";
+      
+            } catch (error) {
+                console.error("Login Failed:", error);
+                alert("Login Failed!");
+            }
+        };
+      </script>
+      
+      
+      
+
+</body>
+</html>
