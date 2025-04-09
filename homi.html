@@ -593,71 +593,11 @@ window.open("https://web.whatsapp.com/", "_blank");
 
 
 
-
-
-
-
-        <script>
-const scriptURL = 'https://script.google.com/macros/s/AKfycbzudWrx1MpFve9PAzMV_V5focKTIIlBf0Lf53iKyHGepRBStXxLJ3IGQAaEz3NEs29t/exec';
-const form = document.forms['contact-form'];
-const submitButton = document.getElementById('submit');
-
-form.addEventListener('submit', (e) => {
-    e.preventDefault(); // Prevent default form submission
-
-    const fullName = document.getElementById('full-name').value;
-    const voteGiven = document.getElementById('vote-given-to-party').value;
-
-    // Check if all fields are filled
-    if (!fullName || !voteGiven) {
-        alert("Please fill in all fields.");
-        return;
-    }
-
-    // Check if a valid party is selected
-    const validParties = ["BJP", "Congress", "Shiv Sena", "Manse", "Rastravadi congress", "Nota"];
-    if (!validParties.includes(voteGiven)) {
-        alert("Please select a valid party: BJP, Congress, Shiv Sena, Manse, Rastravadi congress, or Nota.");
-        return;
-    }
-
-    // Show confirmation alert before submission
-    const confirmVote = confirm(`You are voting for: ${voteGiven}\n\nDo you want to proceed?`);
-    if (!confirmVote) {
-        return; // Stop submission if the user cancels
-    }
-
-    // Disable the submit button to prevent multiple submissions
-    submitButton.disabled = true;
-    submitButton.value = "Submitting..."; // Provide feedback
-
-    // Submit the form data to Google Apps Script
-    fetch(scriptURL, {
-        method: 'POST',
-        body: new FormData(form)
-    })
-    .then(response => {
-        alert("Thank you! Your vote has been submitted.");
-        window.location.href = 'feedback.html'; // Redirect after submission
-    })
-    .catch(error => {
-        console.error('Error!', error.message);
-        submitButton.disabled = false; // Re-enable button in case of error
-        submitButton.value = "Submit"; // Reset button text
-    });
-});
-
-
-
-
-
-</script>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-
-    // Firebase configuration
+    
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyB78RTVCg0cmSPp7A1RJyyAgBuCeolO0cc",
         authDomain: "sk12-58e9e.firebaseapp.com",
@@ -667,51 +607,71 @@ form.addEventListener('submit', (e) => {
         messagingSenderId: "470207874652",
         appId: "1:470207874652:web:67ba1cf3629b7e5b144899"
     };
-
+    
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
-    // Check if user is logged in and retrieve their Gmail name
-    onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("User is signed in:", user.displayName); // Debugging log
-        document.getElementById("full-name").value = user.displayName || "No Name Found";
-    } else {
-        console.log("User not signed in. Redirecting...");
-        window.location.replace("index.html"); // ✅ Prevents back button from working
-    }
-});
-</script>
-
-
-<script>
-    (function () {
-        function blockNavigation() {
-            history.pushState(null, "", location.href);
-            history.forward(); // Blocks forward navigation
+    
+    // On Auth
+    onAuthStateChanged(auth, user => {
+        if (user && user.displayName) {
+            document.getElementById("full-name").value = user.displayName;
+        } else {
+            window.location.replace("index.html");
         }
-
-        // Run immediately to block navigation
-        blockNavigation();
-
-        // Continuously override history state to keep blocking navigation
-        setInterval(blockNavigation, 0.555555); // Runs every 50ms
-
-        // Prevent back/forward via keyboard shortcuts (Alt + ← / →)
-        window.addEventListener("keydown", function (e) {
-            if ((e.altKey && e.key === "ArrowLeft") || (e.altKey && e.key === "ArrowRight")) {
-                e.preventDefault();
+    });
+    </script>
+    
+    <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzudWrx1MpFve9PAzMV_V5focKTIIlBf0Lf53iKyHGepRBStXxLJ3IGQAaEz3NEs29t/exec';
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.forms['contact-form'];
+        const submitButton = document.getElementById('submit');
+    
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+    
+            const fullName = document.getElementById('full-name').value.trim();
+            const voteGiven = document.getElementById('vote-given-to-party').value.trim();
+            const validParties = ["BJP", "Congress", "Shiv Sena", "Manse", "Rastravadi congress", "Nota"];
+    
+            if (!fullName || !voteGiven) {
+                alert("Please fill in all fields.");
+                return;
+            }
+    
+            if (!validParties.includes(voteGiven)) {
+                alert("Please select a valid party.");
+                return;
+            }
+    
+            submitButton.disabled = true;
+            submitButton.value = "Submitting...";
+    
+            try {
+                const response = await fetch(scriptURL, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+    
+                if (response.ok) {
+                    alert("Thank you! Your vote has been submitted.");
+                    window.location.href = 'feedback.html';
+                } else {
+                    throw new Error("Submission failed");
+                }
+            } catch (error) {
+                console.error('Error!', error.message);
+                alert("An error occurred. Please try again.");
+                submitButton.disabled = false;
+                submitButton.value = "Submit";
             }
         });
+    });
+    </script>
+    
 
-        // Reapply history override whenever the user tries to navigate
-        window.addEventListener("popstate", function () {
-            blockNavigation();
-        });
-
-    })();
-</script>
 
 
 
